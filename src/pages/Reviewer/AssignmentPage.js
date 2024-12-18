@@ -12,7 +12,6 @@ export default function ReviewerAssignmentPage() {
     const [submissions, setSubmissions] = useState([]);
     const [isOpenReviewModal, setIsOpenReviewModal] = useState(false);
     const [isOpenEditAssignmentModal, setIsOpenEditAssignmentModal] = useState(false);
-    const [pending, setPending] = useState(true);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
     const baseBackend = process.env.REACT_APP_BASE_BACKEND;
     const hasFetchedData = useRef(false);
@@ -43,11 +42,6 @@ export default function ReviewerAssignmentPage() {
 
             const submissionsResponse = await axios.get(`${baseBackend}/reviewer/assignment/${assignmentId}/submissions/`);
             setSubmissions(submissionsResponse.data);
-            submissionsResponse.data.map((submission) => {
-                if (pending && submission.status === "Approved") {
-                    setPending(false);
-                }
-            });
         } catch (err) {
             console.error("Error fetching data:", err);
         }
@@ -88,7 +82,7 @@ export default function ReviewerAssignmentPage() {
                                         key={submission.id}
                                         submission={submission}
                                         openReviewModal={() => openReviewModal(submission)}
-                                        pending={pending} />
+                                        pending={(submissions.status!=='Approved')} />
                                     <CreateReviewModal
                                         open={isOpenReviewModal}
                                         onClose={closeReviewModal}
@@ -129,9 +123,6 @@ function AssignmentDetails({ assignment, openAssignmentModal }) {
             <p><strong>Created At:</strong> {new Date(assignment.created_at).toLocaleString()}</p>
 
             <Box className="flex mt-4 space-x-4">
-                <Button variant="contained" color="success">
-                    Mark as Reviewed
-                </Button>
                 <Button variant="contained" color="warning">
                     Notify Assignees
                 </Button>
@@ -142,7 +133,10 @@ function AssignmentDetails({ assignment, openAssignmentModal }) {
 
 function SubmissionReviewCard({ submission, openReviewModal, pending }) {
     return (
-        <Box className="p-4 bg-gray-800 shadow-md rounded-lg mb-4">
+        <Box
+            className="p-4 bg-gray-800 shadow-md rounded-lg transition-transform duration-200 hover:shadow-lg hover:-translate-y-1"
+        >
+
             <h3 className="font-semibold text-lg">Submitted by: {submission.submitted_by}</h3>
             <p>Description: {submission.description}</p>
             <p>Submitted on: {new Date(submission.updated_at).toLocaleString()}</p>

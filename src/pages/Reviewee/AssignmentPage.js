@@ -124,7 +124,7 @@ function DownloadButton({ files }) {
     );
 }
 
-function CreateSubmissionForm({ assignmentId, setSubmissions}) {
+function CreateSubmissionForm({ assignmentId, setSubmissions }) {
     const [description, setDescription] = useState("");
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -217,9 +217,12 @@ function SubmissionList({ assignmentId, submissions, setSubmissions }) {
             ) : submissions.length === 0 ? (
                 <p className="text-center text-lg">No submissions found for this assignment.</p>
             ) : (
-                <ul className="list-disc list-inside space-y-4 mt-4 max-h-96 overflow-y-auto">
+                <ul className="list-none list-inside space-y-4 mt-4 max-h-96 overflow-y-auto">
                     {submissions.map((submission) => (
-                        <li key={submission.id} className="p-4 bg-gray-800 shadow-md rounded-lg transition duration-200 hover:shadow-lg">
+                        <li
+                            key={submission.id}
+                            className="p-4 bg-gray-800 shadow-md rounded-lg transition-transform duration-200 hover:shadow-lg hover:-translate-y-1"
+                        >
                             <h1 className="font-semibold text-lg">Submitted by: {submission.submitted_by}</h1>
                             <p className="mt-2">Description: {submission.description}</p>
                             <p className="mt-2">Submitted on: {new Date(submission.updated_at).toLocaleString()}</p>
