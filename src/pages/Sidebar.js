@@ -2,8 +2,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Container, Card, CardContent, Typography, Button, Grid, CircularProgress } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 
-export function LeftSidebar() {
+export function LeftSidebar({ toggleMenu }) {
     const user = useSelector((state) => state.user);
+
+    const handleClick = () => {
+        if (toggleMenu) toggleMenu();
+    };
 
     return (
         <aside className="w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0">
@@ -15,31 +19,36 @@ export function LeftSidebar() {
             </div>
 
             <nav className="flex-1 overflow-auto p-6">
-                <Link to="#" className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Dashboard
                 </Link>
-                <Link to="#" className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Assignments
                 </Link>
-                <Link to="#" className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Reviews
                 </Link>
-                <Link to="#" className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Submissions
                 </Link>
             </nav>
 
             <div className="mt-auto">
-                <Link to="#" className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Settings
                 </Link>
-                <Link to="/logout" className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                <Link to="/logout" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Log Out {user.username}
                 </Link>
             </div>
         </aside>
     );
 }
+
+LeftSidebar.defaultProps = {
+    toggleMenu: null,
+};
+
 
 export function RightSidebar() {
     return (

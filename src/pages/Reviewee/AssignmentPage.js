@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { LeftSidebar, RightSidebar } from "../Sidebar";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { CircularProgress } from "@mui/material";
+import MenuIcon from '@mui/icons-material/Menu';
+import { CircularProgress, IconButton } from "@mui/material";
 
-export default function RevieweeAssignmentPage() {
+export default function RevieweeAssignmentPage({ isDesktop, toggleMenu }) {
     const { assignmentId } = useParams();
     const [submissions, setSubmissions] = useState([]);
     const [assignment, setAssignment] = useState({ subtasks: [], files: [] });
@@ -30,11 +31,19 @@ export default function RevieweeAssignmentPage() {
     }, [assignmentId]);
 
     return (
-        <div className="h-screen flex bg-black text-white">
-            <LeftSidebar />
-            <div className="flex-1 overflow-auto">
-                <div className="flex bg-gray-900 justify-between items-center mb-3 p-4">
-                    <h1 className="text-2xl font-bold">Assignment: {assignment.title || "Loading..."}</h1>
+        <div className="flex-1 overflow-auto">
+            <div className="flex bg-gray-900 justify-between items-center mb-6 p-4">
+                <h1 className="text-2xl font-bold ">
+                    {!isDesktop && (
+                        <span className="pr-4">
+                            <IconButton onClick={toggleMenu} color="inherit">
+                                <MenuIcon />
+                            </IconButton>
+                        </span>
+                    )}
+                    Reviewer: Assignment {assignment?.title}
+                </h1>
+                {isDesktop && (
                     <input
                         type="text"
                         placeholder="Search Subtasks"
@@ -42,27 +51,26 @@ export default function RevieweeAssignmentPage() {
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                     />
-                </div>
-
-                <main className="p-6 min-h-full">
-                    {loading ? (
-                        <div className="flex justify-center">
-                            <CircularProgress />
-                        </div>
-                    ) : error ? (
-                        <div className="text-center text-red-500">{error}</div>
-                    ) : (
-                        <>
-                            <AssignmentDetails assignment={assignment} />
-                            <SubtaskList subtasks={assignment.subtasks} filter={filter} />
-                            <DownloadButton files={assignment.files} />
-                            <SubmissionList assignmentId={assignmentId} submissions={submissions} setSubmissions={setSubmissions} />
-                            <CreateSubmissionForm assignmentId={assignmentId} setSubmissions={setSubmissions} />
-                        </>
-                    )}
-                </main>
+                )}
             </div>
-            <RightSidebar />
+
+            <main className="p-6 min-h-full">
+                {loading ? (
+                    <div className="flex justify-center">
+                        <CircularProgress />
+                    </div>
+                ) : error ? (
+                    <div className="text-center text-red-500">{error}</div>
+                ) : (
+                    <>
+                        <AssignmentDetails assignment={assignment} />
+                        <SubtaskList subtasks={assignment.subtasks} filter={filter} />
+                        <DownloadButton files={assignment.files} />
+                        <SubmissionList assignmentId={assignmentId} submissions={submissions} setSubmissions={setSubmissions} />
+                        <CreateSubmissionForm assignmentId={assignmentId} setSubmissions={setSubmissions} />
+                    </>
+                )}
+            </main>
         </div>
     );
 }

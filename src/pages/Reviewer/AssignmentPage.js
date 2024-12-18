@@ -1,18 +1,20 @@
 import React, { useEffect, useState, useRef } from "react";
-import { LeftSidebar, RightSidebar } from '../Sidebar';
 import { useParams } from 'react-router-dom';
 import axios from "axios";
-import { Box, Button, CircularProgress, Modal, TextField, Select, MenuItem } from '@mui/material';
+import { Box, Button, CircularProgress, IconButton } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import CreateReviewModal from "./ReviewAssignment";
 import EditAssignmentModal from "./EditAssignment";
 
-export default function ReviewerAssignmentPage() {
+
+export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
     const { assignmentId } = useParams();
     const [assignment, setAssignment] = useState(null);
     const [submissions, setSubmissions] = useState([]);
     const [isOpenReviewModal, setIsOpenReviewModal] = useState(false);
     const [isOpenEditAssignmentModal, setIsOpenEditAssignmentModal] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
+    const [filter, setFilter] = useState("");
     const baseBackend = process.env.REACT_APP_BASE_BACKEND;
     const hasFetchedData = useRef(false);
 
@@ -55,55 +57,71 @@ export default function ReviewerAssignmentPage() {
     }, []);
 
     return (
-        <div className="h-screen flex bg-black text-white">
-            <LeftSidebar />
-            <div className="flex-1 overflow-auto">
-                <Box className="flex bg-gray-900 justify-between items-center mb-6 p-4">
-                    <h1 className="text-2xl font-bold">Reviewer: Assignment {assignment?.title}</h1>
-                </Box>
 
-                <main className="p-6 min-h-full">
-                    {assignment ? (
-                        <AssignmentDetails assignment={assignment} openAssignmentModal={openAssignmentModal} />
-                    ) : (
-                        <div className="flex justify-center">
-                            <CircularProgress />
-                        </div>
+        <div className="flex-1 overflow-auto">
+            <Box className="flex bg-gray-900 justify-between items-center mb-6 p-4">
+                <h1 className="text-2xl font-bold ">
+                    {!isDesktop && (
+                        <span className="pr-4">
+                            <IconButton onClick={toggleMenu} color="inherit">
+                                <MenuIcon />
+                            </IconButton>
+                        </span>
                     )}
+                    Reviewer: Assignment {assignment?.title}
+                </h1>
+                {isDesktop && (
+                    <input
+                        type="text"
+                        placeholder="Search Subtasks"
+                        className="w-64 p-2 border border-gray-600 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                    />
+                )}
+            </Box>
 
-                    <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-                        <h2 className="text-2xl font-bold mb-4">Submissions</h2>
-                        {submissions.length === 0 ? (
-                            <p className="text-center text-lg text-gray-600">No submissions found for this assignment.</p>
-                        ) : (
-                            submissions.map((submission) => (
-                                <>
-                                    <SubmissionReviewCard
-                                        key={submission.id}
-                                        submission={submission}
-                                        openReviewModal={() => openReviewModal(submission)}
-                                        pending={(submissions.status!=='Approved')} />
-                                    <CreateReviewModal
-                                        open={isOpenReviewModal}
-                                        onClose={closeReviewModal}
-                                        submission={submission}
-                                        fetchData={fetchData} />
-                                </>
-                            ))
-                        )}
-                    </Box>
-                </main>
+            <main className="p-6 min-h-full">
+                {assignment ? (
+                    <AssignmentDetails assignment={assignment} openAssignmentModal={openAssignmentModal} />
+                ) : (
+                    <div className="flex justify-center">
+                        <CircularProgress />
+                    </div>
+                )}
+
+                <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+                    <h2 className="text-2xl font-bold mb-4">Submissions</h2>
+                    {submissions.length === 0 ? (
+                        <p className="text-center text-lg text-gray-600">No submissions found for this assignment.</p>
+                    ) : (
+                        submissions.map((submission) => (
+                            <>
+                                <SubmissionReviewCard
+                                    key={submission.id}
+                                    submission={submission}
+                                    openReviewModal={() => openReviewModal(submission)}
+                                    pending={(submissions.status !== 'Approved')} />
+                                <CreateReviewModal
+                                    open={isOpenReviewModal}
+                                    onClose={closeReviewModal}
+                                    submission={submission}
+                                    fetchData={fetchData} />
+                            </>
+                        ))
+                    )}
+                </Box>
+            </main>
 
 
-                {assignment ?
-                    <EditAssignmentModal
-                        open={isOpenEditAssignmentModal}
-                        onClose={closeAssignmentModal}
-                        fetchData={fetchData}
-                        assignment={assignment} /> : ""}
-            </div>
-            <RightSidebar />
+            {assignment ?
+                <EditAssignmentModal
+                    open={isOpenEditAssignmentModal}
+                    onClose={closeAssignmentModal}
+                    fetchData={fetchData}
+                    assignment={assignment} /> : ""}
         </div>
+
     );
 }
 
