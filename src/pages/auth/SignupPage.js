@@ -9,6 +9,7 @@ export default function SignupPage() {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('');
     const [errors, setErrors] = useState({});
     const navigate = useNavigate();
     const baseBackend = process.env.REACT_APP_BASE_BACKEND;
@@ -23,8 +24,8 @@ export default function SignupPage() {
 
         try {
             const response = await axios.post(
-                `${baseBackend}/auth/signup/`, // Assuming this is the correct signup endpoint
-                { first_name: firstName, last_name: lastName, username, email, password, role: 'Reviewee' },
+                `${baseBackend}/auth/signup/`,
+                { first_name: firstName, last_name: lastName, username, email, password, role },
                 {
                     headers: { "Content-Type": "application/json" },
                     withCredentials: true,
@@ -32,10 +33,10 @@ export default function SignupPage() {
             );
 
             localStorage.clear();
-            localStorage.setItem("access_token", response.data.access);
-            localStorage.setItem("refresh_token", response.data.refresh);
+            localStorage.setItem("access_token", response.data.access_token);
+            localStorage.setItem("refresh_token", response.data.refresh_token);
             axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
-            window.location.href = "/dashboard"; // Redirect to dashboard
+            window.location.href = "/dashboard";
         } catch (err) {
             if (err.response?.data.errors) {
                 setErrors(err.response.data.errors);
@@ -122,6 +123,20 @@ export default function SignupPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-semibold" htmlFor="roleSelect">Role</label>
+                                <select
+                                    id="roleSelect"
+                                    className="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    onChange={(e) => setRole(e.target.value)}
+                                >
+                                    <option value="" disabled selected>Select a role</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Reviewer">Reviewer</option>
+                                    <option value="Reviewee">Reviewee</option>
+                                </select>
+                            </div>
+
                             {errors.non_field_errors && (
                                 <div className="text-red-500 text-sm">
                                     {errors.non_field_errors.map((error, index) => (
