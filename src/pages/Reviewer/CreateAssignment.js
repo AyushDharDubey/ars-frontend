@@ -1,31 +1,50 @@
-import { CircularProgress, Modal, Box, TextField, Select, MenuItem, Chip, OutlinedInput } from '@mui/material';
+import {
+    CircularProgress,
+    Modal,
+    Box,
+    TextField,
+    Select,
+    MenuItem,
+    Chip,
+    OutlinedInput,
+    Button,
+    IconButton,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Add, Remove } from "@mui/icons-material";
 
 export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [dueDate, setDueDate] = useState("");
-    const [subtasks, setSubtasks] = useState([]);
-    const [subtaskTitle, setSubtaskTitle] = useState("");
-    const [subtaskDescription, setSubtaskDescription] = useState("");
     const [files, setFiles] = useState([]);
     const [allReviewees, setAllReviewees] = useState([]);
+    const [allTeams, setAllTeams] = useState([]);
     const [reviewees, setReviewees] = useState([]);
+    const [teams, setTeams] = useState([]);
+    const [subtasks, setSubtasks] = useState([{ title: "", description: "" }]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const baseBackend = process.env.REACT_APP_BASE_BACKEND;
 
-    const handleAddSubtask = () => {
-        if (subtaskTitle && subtaskDescription) {
-            setSubtasks([...subtasks, { title: subtaskTitle, description: subtaskDescription }]);
-            setSubtaskTitle("");
-            setSubtaskDescription("");
-        }
-    };
-
     const handleFileChange = (event) => {
         setFiles(event.target.files);
+    };
+
+    const handleSubtaskChange = (index, field, value) => {
+        const updatedSubtasks = [...subtasks];
+        updatedSubtasks[index][field] = value;
+        setSubtasks(updatedSubtasks);
+    };
+
+    const addSubtask = () => {
+        setSubtasks([...subtasks, { title: "", description: "" }]);
+    };
+
+    const removeSubtask = (index) => {
+        const updatedSubtasks = subtasks.filter((_, i) => i !== index);
+        setSubtasks(updatedSubtasks);
     };
 
     const handleSubmit = async (event) => {
@@ -38,18 +57,25 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
             formData.append("title", title);
             formData.append("description", description);
             formData.append("due_date", dueDate);
-            subtasks.forEach((subtask, index) => {
-                formData.append(`subtasks[${index}][title]`, subtask.title);
-                formData.append(`subtasks[${index}][description]`, subtask.description);
-            });
             Array.from(files).forEach((file) => {
                 formData.append("files", file);
             });
-            formData.append("assigned_to", reviewees.map(_ => _.id));
-            formData.append("assigned_to_team", []);
+            formData.append(
+                "assigned_to",
+                reviewees.map((reviewee) => reviewee.id)
+            );
+            formData.append(
+                "assigned_to_team",
+                teams.map((team) => team.id)
+            );
+            if (subtasks.length > 1) {
+                subtasks.slice(0, -1).forEach((subtask) => {
+                    formData.append("subtasks", JSON.stringify(subtask));
+                });
+            }
+            // formData.append("subtasks", JSON.stringify(subtasks));
 
             await onSubmit(formData);
-            onClose();
         } catch (err) {
             setError("Failed to create assignment. Please try again.");
             console.error(err);
@@ -60,19 +86,20 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
 
     useEffect(() => {
         (async () => {
-            await axios.get(`${baseBackend}/reviewer/list_reviewees/`)
-                .then((response) => {
-                    setAllReviewees(response.data);
-                });
+            await axios.get(`${baseBackend}/reviewer/list_reviewees/`).then((response) => {
+                setAllReviewees(response.data);
+            });
+            await axios.get(`${baseBackend}/reviewer/list_teams/`).then((response) => {
+                setAllTeams(response.data);
+            });
         })();
     }, []);
 
     return (
         <Modal open={open} onClose={onClose} className="flex items-center justify-center">
-            <Box className="bg-gray-800 text-white p-8 rounded-lg shadow-md max-w-2xl overflow-auto mx-auto relative">
+            <Box className="bg-gray-800 text-white p-8 rounded-lg shadow-md max-w-2xl overflow-auto mx-auto min-w-[70vh] relative">
                 <h1 className="text-2xl font-bold mb-6">Create Assignment</h1>
-                <form onSubmit={handleSubmit} className='max-h-[70vh]'>
-
+                <form onSubmit={handleSubmit} className="max-h-[70vh]">
                     <div className="mb-4">
                         <TextField
                             fullWidth
@@ -130,37 +157,60 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
                     </div>
 
                     <div className="mb-4">
-                        <h2 className="text-lg font-bold mb-2">Subtasks</h2>
-                        <div className="flex space-x-4">
-                            <input
-                                type="text"
-                                placeholder="Subtask Title"
-                                value={subtaskTitle}
-                                onChange={(e) => setSubtaskTitle(e.target.value)}
-                                className="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-lg"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Subtask Description"
-                                value={subtaskDescription}
-                                onChange={(e) => setSubtaskDescription(e.target.value)}
-                                className="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-lg"
-                            />
-                            <button
-                                type="button"
-                                onClick={handleAddSubtask}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
-                            >
-                                Add
-                            </button>
-                        </div>
-                        <ul className="list-disc list-inside mt-4 space-y-2">
-                            {subtasks.map((subtask, index) => (
-                                <li key={index} className="p-2 bg-gray-700 rounded-lg">
-                                    <strong>{subtask.title}</strong>: {subtask.description}
-                                </li>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Assign Teams</label>
+                        <Select
+                            multiple
+                            fullWidth
+                            value={teams}
+                            onChange={(e) => setTeams(e.target.value)}
+                            renderValue={(selected) => (
+                                <div className="flex flex-wrap">
+                                    {selected.map((team) => (
+                                        <Chip key={team.id} label={team.name} className="m-1 bg-blue-600 text-white" />
+                                    ))}
+                                </div>
+                            )}
+                        >
+                            {allTeams?.map((team) => (
+                                <MenuItem key={team.id} value={team}>
+                                    {team.name}
+                                </MenuItem>
                             ))}
-                        </ul>
+                        </Select>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Subtasks</label>
+                        {subtasks.map((subtask, index) => (
+                            <div key={index} className="flex items-center mb-2 space-x-4">
+                                <TextField
+                                    label="Title"
+                                    variant="outlined"
+                                    value={subtask.title}
+                                    onChange={(e) => handleSubtaskChange(index, "title", e.target.value)}
+                                    fullWidth
+                                />
+                                <TextField
+                                    label="Description"
+                                    variant="outlined"
+                                    value={subtask.description}
+                                    onChange={(e) => handleSubtaskChange(index, "description", e.target.value)}
+                                    fullWidth
+                                />
+                                <IconButton onClick={() => removeSubtask(index)} color="error">
+                                    <Remove />
+                                </IconButton>
+                            </div>
+                        ))}
+                        <Button
+                            onClick={addSubtask}
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Add />}
+                            className="mt-2"
+                        >
+                            Add Subtask
+                        </Button>
                     </div>
 
                     <div className="mb-4">

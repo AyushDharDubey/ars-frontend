@@ -91,6 +91,22 @@ export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
                 )}
 
                 <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+                    <h2 className="text-2xl font-bold mb-4">Subtasks</h2>
+                    {assignment?.subtasks?.length === 0 ? (
+                        <p className="text-center text-lg text-gray-600">No subtasks found for this assignment.</p>
+                    ) : (
+                        assignment?.subtasks?.map((subtask) => (
+                            <div
+                                className="p-4 bg-gray-800 rounded-lg transition-transform duration-200"
+                            >
+                                <h3 className="font-semibold text-lg">Title: {subtask.title}</h3>
+                                <p>Description: {subtask.description}</p>
+                            </div>
+                        ))
+                    )}
+                </Box>
+
+                <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
                     <h2 className="text-2xl font-bold mb-4">Submissions</h2>
                     {submissions.length === 0 ? (
                         <p className="text-center text-lg text-gray-600">No submissions found for this assignment.</p>
