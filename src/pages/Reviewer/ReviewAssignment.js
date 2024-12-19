@@ -56,7 +56,7 @@ export default function CreateReviewModal({ open, onClose, submission, fetchData
                             onChange={(e) => setStatus(e.target.value)}
                             variant="outlined"
                         >
-                            <MenuItem value="Changes Requested">Changes Requested</MenuItem>
+                            <MenuItem value="Changes Suggested">Changes Suggested</MenuItem>
                             <MenuItem value="Approved">Approved</MenuItem>
                             <MenuItem value="Rejected">Rejected</MenuItem>
                         </Select>

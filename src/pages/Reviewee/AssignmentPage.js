@@ -205,7 +205,6 @@ function SubmissionList({ assignmentId, submissions, setSubmissions }) {
             try {
                 const response = await axios.get(`${baseBackend}/reviewee/assignment/${assignmentId}/submissions/`);
                 setSubmissions(response.data);
-                // response.data = [{"id":11,"files":[],"reviews":[{"id":6,"comments":"od agoai","status":"Rejected","created_at":"2024-12-18T05:23:52.486297Z","updated_at":"2024-12-18T05:23:52.486360Z","submission":11,"reviewer":13}],"is_group_submission":false,"description":"ljsdf","created_at":"2024-10-29T19:01:20.704459Z","updated_at":"2024-10-29T19:01:20.704497Z","assignment":12,"submitted_by":12}]
             } catch (error) {
                 console.error("Error fetching submissions:", error);
             } finally {

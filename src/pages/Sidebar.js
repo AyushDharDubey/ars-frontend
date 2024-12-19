@@ -19,7 +19,7 @@ export function LeftSidebar({ toggleMenu }) {
             </div>
 
             <nav className="flex-1 overflow-auto p-6">
-                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                <Link to="/dashboard" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Dashboard
                 </Link>
                 <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
