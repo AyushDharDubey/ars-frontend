@@ -5,6 +5,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/auth/LoginPage';
+import OAuthCallback from './pages/auth/OuathCallback';
 import LogoutPage from './pages/auth/LogoutPage';
 import SignupPage from './pages/auth/SignupPage';
 import DashboardPage from './pages/DashboardPage';
@@ -42,14 +43,14 @@ function App() {
               roles: response.data.roles,
             })
           );
-          setLoading(false);  // Set loading to false after user data is initialized
+          setLoading(false);
         })
         .catch(err => {
           console.log("Error fetching user profile:", err);
-          setLoading(false);  // Set loading to false even if there's an error
+          setLoading(false);
         });
     } else {
-      setLoading(false); // No need to load user context on auth pages
+      setLoading(false);
     }
   }, [location.pathname, dispatch, baseBackend]);
 
@@ -72,6 +73,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/oauth/channeli/callback" element={<OAuthCallback />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route

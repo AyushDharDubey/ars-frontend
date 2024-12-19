@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import image from '../../assets/image.png';
 import { useNavigate, Link } from 'react-router-dom';
+import { Button } from "@mui/material";
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -9,6 +10,8 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const baseBackend = process.env.REACT_APP_BASE_BACKEND;
+  const channeliCallbackUri = process.env.REACT_APP_CHANNELI_CALLBACK_URI
+  const channeliClientId = process.env.REACT_APP_CHANNELI_CLIENT_ID
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -27,8 +30,8 @@ export default function LoginPage() {
       }
     ).then(response => {
       localStorage.clear();
-      localStorage.setItem("access_token", response.data.access);
-      localStorage.setItem("refresh_token", response.data.refresh);
+      localStorage.setItem("access_token", response.data.access_token);
+      localStorage.setItem("refresh_token", response.data.refresh_token);
       axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
       navigate('/dashboard');
     }).catch(err => {
@@ -91,10 +94,27 @@ export default function LoginPage() {
               <button className="w-full py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600">
                 Login
               </button>
+
+              <button className="w-full py-3 rounded-lg font-semibold flex justify-center"
+
+              >
+                <a
+                  href={"http://channeli.in/oauth/authorise?client_id=" + channeliClientId + "&redirect_uri=" + channeliCallbackUri + "&state=Reviewee"}
+                  className="flex items-center gap-2 no-underline"
+                >
+                  <img
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAkCAYAAAAOwvOmAAAACXBIWXMAABCcAAAQnAEmzTo0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAG7SURBVHgB7ZdNSwJRFIbfuSY2ljApJhmE0CYiMFpEkkRFHxBtjaBd9ROqbevoL1QQtAzamFKrCoJqFbiqVSSRi4pIzBLCzigEMpb3XsEZYh4QwTnCw51z3jmjYLtYhJVYUhQGC2JL8WJL8WJJqSbUic8FjAcAhwM4zwDpPOpGWqpXA9bDwFx35e/xe2DlCrh5gzRSty/UChxOGYV0ZruA0xlgwAtpxKUo/3eiZbHfCLiB3ZFybUOkwnQCY8HadX1UFwtBCmGpSDt/bY8GKYSlXAL/cDoghbBUOsdfeyc5gcJS8TTw8lm77vkDSD5ACmGpAk3U8hl9f/1dt5kCHiWDVCqnDui01iggM+/Ga690iquXwEYK0ij1bJ56Vk1TPIx2oJRJF090y0j4Ngt5aPNU7HWYE1uKl3+y5NFYDPoBN8cj5ISWPppvYaSWvMQkbZxq7TplC1JSdk/x0tTPcrjOFKpfVemtwONGo2HHMRVRjZ6u2bzxky/ADJi/hWF/wYuhoBNWodRTAQ9DctGHSKc1xH4aXVMZjkhs2AJiFdPnaS6f2ETIBTMxRIIutjffhoiJPVY1p/QeS5jYY99ezWAQS3quOQAAAABJRU5ErkJggg=="
+                    alt="Channeli Logo"
+                    className="h-6"
+                  />
+                  <span className="text-base">Sign in with Channeli</span>
+                </a>
+              </button>
+
             </form>
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
