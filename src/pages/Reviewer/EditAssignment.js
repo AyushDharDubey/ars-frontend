@@ -60,7 +60,7 @@ export default function EditAssignmentModal({ open, onClose, onSubmit, assignmen
 
     useEffect(() => {
         (async () => {
-            await axios.get(`${baseBackend}/reviewer/list_reviewees/`)
+            await axios.get(`${baseBackend}/api/list_reviewees/`)
                 .then((response) => {
                     const fetchedReviewees = response.data;
                     setAllReviewees(fetchedReviewees);

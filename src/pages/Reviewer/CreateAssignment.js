@@ -3,12 +3,10 @@ import {
     Modal,
     Box,
     TextField,
-    Select,
-    MenuItem,
     Chip,
-    OutlinedInput,
     Button,
     IconButton,
+    Autocomplete,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -60,20 +58,19 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
             Array.from(files).forEach((file) => {
                 formData.append("files", file);
             });
-            formData.append(
-                "assigned_to",
-                reviewees.map((reviewee) => reviewee.id)
-            );
-            formData.append(
-                "assigned_to_team",
-                teams.map((team) => team.id)
-            );
-            if (subtasks.length > 1) {
-                subtasks.slice(0, -1).forEach((subtask) => {
-                    formData.append("subtasks", JSON.stringify(subtask));
-                });
-            }
-            // formData.append("subtasks", JSON.stringify(subtasks));
+            reviewees.forEach((reviewee) => {
+                formData.append(
+                    "assigned_to",
+                    reviewee.id)
+            });
+            teams.forEach((team) => {
+                formData.append(
+                    "assigned_to_teams",
+                    team.id)
+            });
+            subtasks.forEach((subtask) => {
+                formData.append("subtasks", JSON.stringify(subtask));
+            });
 
             await onSubmit(formData);
         } catch (err) {
@@ -86,10 +83,10 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
 
     useEffect(() => {
         (async () => {
-            await axios.get(`${baseBackend}/reviewer/list_reviewees/`).then((response) => {
+            await axios.get(`${baseBackend}/api/list_reviewees/`).then((response) => {
                 setAllReviewees(response.data);
             });
-            await axios.get(`${baseBackend}/reviewer/list_teams/`).then((response) => {
+            await axios.get(`${baseBackend}/api/list_teams/`).then((response) => {
                 setAllTeams(response.data);
             });
         })();
@@ -134,49 +131,59 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Assign Reviewees</label>
-                        <Select
+                        <Autocomplete
                             multiple
-                            fullWidth
+                            options={allReviewees}
+                            getOptionLabel={(option) => option.username}
                             value={reviewees}
-                            onChange={(e) => setReviewees(e.target.value)}
-                            renderValue={(selected) => (
-                                <div className="flex flex-wrap">
-                                    {selected.map((reviewee) => (
-                                        <Chip key={reviewee.id} label={reviewee.username} className="m-1 bg-blue-600 text-white" />
-                                    ))}
-                                </div>
+                            onChange={(event, newValue) => setReviewees(newValue)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="outlined"
+                                    label="Assign Reviewees"
+                                    placeholder="Search and select reviewees..."
+                                />
                             )}
-                        >
-                            {allReviewees?.map((reviewee) => (
-                                <MenuItem key={reviewee.id} value={reviewee}>
-                                    {reviewee.username}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            renderTags={(tagValue, getTagProps) =>
+                                tagValue.map((option, index) => (
+                                    <Chip
+                                        key={option.id}
+                                        label={option.username}
+                                        {...getTagProps({ index })}
+                                        className="bg-blue-600 text-white"
+                                    />
+                                ))
+                            }
+                        />
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Assign Teams</label>
-                        <Select
+                        <Autocomplete
                             multiple
-                            fullWidth
+                            options={allTeams}
+                            getOptionLabel={(option) => option.name}
                             value={teams}
-                            onChange={(e) => setTeams(e.target.value)}
-                            renderValue={(selected) => (
-                                <div className="flex flex-wrap">
-                                    {selected.map((team) => (
-                                        <Chip key={team.id} label={team.name} className="m-1 bg-blue-600 text-white" />
-                                    ))}
-                                </div>
+                            onChange={(event, newValue) => setTeams(newValue)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="outlined"
+                                    label="Assign Teams"
+                                    placeholder="Search and select teams..."
+                                />
                             )}
-                        >
-                            {allTeams?.map((team) => (
-                                <MenuItem key={team.id} value={team}>
-                                    {team.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            renderTags={(tagValue, getTagProps) =>
+                                tagValue.map((option, index) => (
+                                    <Chip
+                                        key={option.id}
+                                        label={option.name}
+                                        {...getTagProps({ index })}
+                                        className="bg-blue-600 text-white"
+                                    />
+                                ))
+                            }
+                        />
                     </div>
 
                     <div className="mb-4">

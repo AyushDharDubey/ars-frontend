@@ -3,7 +3,7 @@ import { LeftSidebar, RightSidebar } from "../Sidebar";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import MenuIcon from '@mui/icons-material/Menu';
-import { CircularProgress, IconButton } from "@mui/material";
+import { CircularProgress, IconButton, Box } from "@mui/material";
 
 export default function RevieweeAssignmentPage({ isDesktop, toggleMenu }) {
     const { assignmentId } = useParams();
@@ -65,8 +65,7 @@ export default function RevieweeAssignmentPage({ isDesktop, toggleMenu }) {
                     <>
                         <AssignmentDetails assignment={assignment} />
                         <SubtaskList subtasks={assignment.subtasks} filter={filter} />
-                        <DownloadButton files={assignment.files} />
-                        <SubmissionList assignmentId={assignmentId} submissions={submissions} setSubmissions={setSubmissions} />
+                        <SubmissionList assignmentId={assignmentId} submissions={submissions} setSubmissions={setSubmissions} filter={filter} />
                         <CreateSubmissionForm assignmentId={assignmentId} setSubmissions={setSubmissions} />
                     </>
                 )}
@@ -80,8 +79,28 @@ function AssignmentDetails({ assignment }) {
         <div className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
             <h3 className="text-xl font-bold mb-4">Assignment Details:</h3>
             <p className="mb-2"><strong>Title:</strong> {assignment.title}</p>
-            <p className="mb-2"><strong>Description:</strong> {assignment.description}</p>
-            <p className="mb-2"><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
+            <p><strong>Description:</strong> {assignment.description}</p>
+            <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
+            <p><strong>Created At:</strong> {new Date(assignment.created_at).toLocaleString()}</p>
+            <p><strong>Assigned to:</strong> {assignment.assigned_to.join(", ")}</p>
+
+            {assignment?.files?.length > 0 && (
+                <Box className="mt-4">
+                    <h4 className="font-semibold text-sm">Files:</h4>
+                    {assignment.files.map((file) => (
+                        <div key={file.id}>
+                            <a
+                                href={file.file}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400"
+                            >
+                                {file.file.split("/").pop()}
+                            </a>
+                        </div>
+                    ))}
+                </Box>
+            )}
         </div>
     );
 }
@@ -92,43 +111,19 @@ function SubtaskList({ subtasks, filter }) {
     );
 
     return (
-        <div className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-            <h3 className="text-xl font-bold mb-4">Subtasks:</h3>
-            {filteredSubtasks.length === 0 ? (
-                <p className="text-center text-lg">No subtasks found.</p>
+        <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold mb-4">Subtasks</h2>
+            {filteredSubtasks?.length === 0 ? (
+                <p className="text-center text-lg text-gray-600">No subtasks found for this assignment.</p>
             ) : (
-                <ul className="list-disc list-inside space-y-4 mt-4 mb-4 max-h-96 overflow-y-auto">
-                    {filteredSubtasks.map((subtask) => (
-                        <li key={subtask.id} className="p-4 shadow-md rounded-lg transition duration-200 hover:shadow-lg">
-                            <h1 className="font-semibold text-lg">{subtask.title}</h1>
-                            <p>{subtask.description}</p>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
-    );
-}
-
-function DownloadButton({ files }) {
-    return (
-        <div className="my-3">
-            {files.length > 0 ? (
-                files.map((file) => (
-                    <div key={file.id} className="mb-2">
-                        <a
-                            href={file.file}
-                            download
-                            className="bg-white text-gray-900 border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-100 rounded-lg text-sm px-5 py-2.5"
-                        >
-                            Download {file.file.split('/').pop()}
-                        </a>
+                filteredSubtasks.map((subtask) => (
+                    <div key={subtask.id} className="p-4 bg-gray-800 rounded-lg transition-transform duration-200">
+                        <h3 className="font-semibold text-lg">Title: {subtask.title}</h3>
+                        <p>Description: {subtask.description}</p>
                     </div>
                 ))
-            ) : (
-                <p className="text-center text-lg">No attachments available.</p>
             )}
-        </div>
+        </Box>
     );
 }
 
@@ -145,7 +140,7 @@ function CreateSubmissionForm({ assignmentId, setSubmissions }) {
         try {
             const formData = new FormData();
             formData.append("description", description);
-            Array.from(files).forEach(file => formData.append("attachments", file));
+            Array.from(files).forEach(file => formData.append("files", file));
 
             await axios.post(
                 `${baseBackend}/reviewee/assignment/${assignmentId}/submit/`,
@@ -195,9 +190,19 @@ function CreateSubmissionForm({ assignmentId, setSubmissions }) {
     );
 }
 
-function SubmissionList({ assignmentId, submissions, setSubmissions }) {
+function SubmissionList({ assignmentId, submissions, setSubmissions, filter }) {
     const [loading, setLoading] = useState(true);
     const baseBackend = process.env.REACT_APP_BASE_BACKEND;
+
+    const filteredSubmissions = submissions.filter((submission) =>
+        submission.description.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    const statusClass = {
+        'Approved': 'text-green-500',
+        'Changes Suggested': 'text-yellow-500',
+        'Rejected': 'text-red-500'
+    };
 
     useEffect(() => {
         const fetchSubmissions = async () => {
@@ -215,8 +220,8 @@ function SubmissionList({ assignmentId, submissions, setSubmissions }) {
     }, [assignmentId]);
 
     return (
-        <div className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-            <h1 className="text-2xl font-bold mt-8 mb-4">Submissions:</h1>
+        <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold mb-4">Submissions</h2>
             {loading ? (
                 <div className="flex justify-center">
                     <CircularProgress />
@@ -224,20 +229,62 @@ function SubmissionList({ assignmentId, submissions, setSubmissions }) {
             ) : submissions.length === 0 ? (
                 <p className="text-center text-lg">No submissions found for this assignment.</p>
             ) : (
-                <ul className="list-none list-inside space-y-4 mt-4 max-h-96 overflow-y-auto">
-                    {submissions.map((submission) => (
-                        <li
-                            key={submission.id}
-                            className="p-4 bg-gray-800 shadow-md rounded-lg transition-transform duration-200 hover:shadow-lg hover:-translate-y-1"
-                        >
-                            <h1 className="font-semibold text-lg">Submitted by: {submission.submitted_by}</h1>
-                            <p className="mt-2">Description: {submission.description}</p>
-                            <p className="mt-2">Submitted on: {new Date(submission.updated_at).toLocaleString()}</p>
-                            <p className="mt-2 font-semibold">Status: {submission.status}</p>
-                        </li>
-                    ))}
-                </ul>
+                filteredSubmissions.map((submission) => (
+                    <div key={submission.id}>
+                        <SubmissionReviewCard
+                            submission={submission}
+                            statusClass={statusClass}
+                        />
+                    </div>
+                ))
             )}
-        </div>
+        </Box>
+    );
+}
+
+function SubmissionReviewCard({ submission, statusClass }) {
+    return (
+        <Box className="p-4 bg-gray-800 shadow-md rounded-lg transition-transform duration-200 hover:shadow-lg hover:-translate-y-1">
+            <Box className="flex justify-between">
+                <Box>
+                    <h3 className="font-semibold text-lg">Submitted by: {submission.submitted_by.username}</h3>
+                    <p>Description: {submission.description}</p>
+                    <p>Submitted on: {new Date(submission.created_at).toLocaleString()}</p>
+                    <p>Last Updated: {new Date(submission.updated_at).toLocaleString()}</p>
+                    <p className={`${statusClass[submission.status]}`}>Status: {submission.status}</p>
+                </Box>
+                {submission?.files?.length > 0 && (
+                    <Box className="mr-4">
+                        <h4 className="font-semibold text-sm">Files:</h4>
+                        {submission.files.map((file) => (
+                            <div key={file.id}>
+                                <a
+                                    href={file.file}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400"
+                                >
+                                    {file.file.split("/").pop()}
+                                </a>
+                            </div>
+                        ))}
+                    </Box>
+                )}
+
+            </Box>
+
+            {submission?.reviews && submission.reviews.length > 0 && (
+                <div className="mt-4">
+                    <h4 className="text-sm text-gray-400">Review:</h4>
+                    {submission.reviews.map((review) => (
+                        <div key={review.id} className="bg-gray-700 p-3 mt-2 rounded-lg">
+                            <p className={`font-medium ${statusClass[submission.status]}`}>Status: {submission.status}</p>
+                            <p>Comments: {review.comments}</p>
+                            <p>Reviewed on: {new Date(review.created_at).toLocaleString()}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </Box>
     );
 }
