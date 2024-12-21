@@ -194,7 +194,22 @@ function AssignmentDetails({ assignment, openAssignmentModal, notifyAssignees })
             <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
             <p className={`${statusClass[assignment.status]}`}><strong>Status:</strong> {assignment.status}</p>
             <p><strong>Created At:</strong> {new Date(assignment.created_at).toLocaleString()}</p>
-            <p><strong>Assigned to:</strong> {assignment.assigned_to.join(", ")}</p>
+            {assignment.assigned_to && assignment.assigned_to.length > 0 ? (
+                <p>
+                    <strong>Assigned to individuals (id): </strong>
+                    <span>{assignment.assigned_to.join(", ")}</span>
+                </p>
+            ) : (
+                <span>No individuals assigned</span>
+            )}
+            {assignment.assigned_to_teams && assignment.assigned_to_teams.length > 0 ? (
+                <p>
+                    <strong>Assigned teams (id): </strong>
+                    <span>{assignment.assigned_to_teams.join(", ")}</span>
+                </p>
+            ) : (
+                <span>No teams assigned</span>
+            )}
 
             {assignment?.files?.length > 0 && (
                 <Box className="mt-4">
