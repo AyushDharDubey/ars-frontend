@@ -22,8 +22,8 @@ export function LeftSidebar({ toggleMenu }) {
                 <Link to="/dashboard" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Dashboard
                 </Link>
-                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
-                    Assignments
+                <Link to="/teams" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                    Teams
                 </Link>
                 <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Reviews

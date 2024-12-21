@@ -10,6 +10,8 @@ import LogoutPage from './pages/auth/LogoutPage';
 import SignupPage from './pages/auth/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import AssignmentPage from './pages/AssignmentPage';
+import TeamsPage from './pages/Team/TeamsPage';
+import TeamChatPage from './pages/Team/TeamChatPage';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from './store/userSlice';
@@ -83,6 +85,14 @@ function App() {
         <Route
           path="/assignment/:assignmentId"
           element={user ? <AssignmentPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/teams"
+          element={user ? <TeamsPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/team/:teamId"
+          element={user ? <TeamChatPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </ThemeProvider>
