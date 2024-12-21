@@ -1,9 +1,8 @@
 import axios from "axios";
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from "react-redux";
 import { LeftSidebar, RightSidebar } from "../Sidebar";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import {
   Box,
@@ -32,6 +31,7 @@ export default function TeamChatPage() {
   const [content, setContent] = useState("");
   const chatBoxRef = useRef(null);
   const ws = useRef(null);
+  const navigate = useNavigate();
   const access_token = localStorage.getItem("access_token")
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
@@ -68,9 +68,17 @@ export default function TeamChatPage() {
   };
 
   const fetchMessages = async () => {
-    const response = await axios.get(`${baseBackend}/api/team/${teamId}/messages/?page=1`);
-    setMessages(response.data.messages);
-    setHasMore(response.data.has_next)
+    await axios.get(`${baseBackend}/api/team/${teamId}/messages/?page=1`)
+      .then((response) => {
+        if (response.status === 200) {
+          setMessages(response.data.messages);
+          setHasMore(response.data.has_next)
+        } else if (response.status === 403) {
+          navigate('/dashboard');
+        }
+      }).catch((error) => {
+        console.log(error);
+      })
   };
 
   useEffect(() => {
@@ -92,7 +100,7 @@ export default function TeamChatPage() {
     ws.current.onclose = () => {
       console.log("WebSocket disconnected");
     };
-    
+
     fetchMessages();
 
     return () => {

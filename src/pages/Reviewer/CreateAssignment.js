@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Add, Remove } from "@mui/icons-material";
 
-export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
+export default function CreateAssignmentModal({ open, onClose, onSubmit, currentUser }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [dueDate, setDueDate] = useState("");
@@ -21,7 +21,9 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
     const [allTeams, setAllTeams] = useState([]);
     const [reviewees, setReviewees] = useState([]);
     const [teams, setTeams] = useState([]);
-    const [subtasks, setSubtasks] = useState([{ title: "", description: "" }]);
+    const [allReviewers, setAllReviewers] = useState([]);
+    const [reviewers, setReviewers] = useState([]);
+    const [subtasks, setSubtasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const baseBackend = process.env.REACT_APP_BASE_BACKEND;
@@ -59,14 +61,13 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
                 formData.append("files", file);
             });
             reviewees.forEach((reviewee) => {
-                formData.append(
-                    "assigned_to",
-                    reviewee.id)
+                formData.append("assigned_to", reviewee.id);
             });
             teams.forEach((team) => {
-                formData.append(
-                    "assigned_to_teams",
-                    team.id)
+                formData.append("assigned_to_teams", team.id);
+            });
+            reviewers.forEach((reviewer) => {
+                formData.append("reviewers", reviewer.id);
             });
             subtasks.forEach((subtask) => {
                 formData.append("subtasks", JSON.stringify(subtask));
@@ -83,20 +84,34 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
 
     useEffect(() => {
         (async () => {
-            await axios.get(`${baseBackend}/api/list_reviewees/`).then((response) => {
-                setAllReviewees(response.data);
-            });
-            await axios.get(`${baseBackend}/api/list_teams/`).then((response) => {
-                setAllTeams(response.data);
-            });
+            try {
+                const revieweesResponse = await axios.get(`${baseBackend}/api/list_reviewees/`);
+                setAllReviewees(revieweesResponse.data);
+
+                const teamsResponse = await axios.get(`${baseBackend}/api/list_teams/`);
+                setAllTeams(teamsResponse.data);
+
+                const reviewersResponse = await axios.get(`${baseBackend}/api/list_reviewers/`);
+                setAllReviewers(reviewersResponse.data);
+
+                if (currentUser) {
+                    const currentUserObj = {
+                        id: currentUser.id,
+                        username: currentUser.username,
+                    };
+                    setReviewers([currentUserObj]);
+                }
+            } catch (err) {
+                console.error(err);
+            }
         })();
-    }, []);
+    }, [currentUser]);
 
     return (
         <Modal open={open} onClose={onClose} className="flex items-center justify-center">
-            <Box className="bg-gray-800 text-white p-8 rounded-lg shadow-md max-w-2xl overflow-auto mx-auto min-w-[70vh] relative">
+            <Box className="bg-gray-800 text-white p-8 rounded-lg shadow-md max-w-2xl overflow-auto mx-auto min-w-[70vh] max-h-[70vh] relative">
                 <h1 className="text-2xl font-bold mb-6">Create Assignment</h1>
-                <form onSubmit={handleSubmit} className="max-h-[70vh]">
+                <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <TextField
                             fullWidth
@@ -120,7 +135,7 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Due Date</label>
+                    <label className="block text-sm font-medium mb-1">Due Date</label>
                         <TextField
                             type="datetime-local"
                             fullWidth
@@ -142,19 +157,8 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
                                     {...params}
                                     variant="outlined"
                                     label="Assign Reviewees"
-                                    placeholder="Search and select reviewees..."
                                 />
                             )}
-                            renderTags={(tagValue, getTagProps) =>
-                                tagValue.map((option, index) => (
-                                    <Chip
-                                        key={option.id}
-                                        label={option.username}
-                                        {...getTagProps({ index })}
-                                        className="bg-blue-600 text-white"
-                                    />
-                                ))
-                            }
                         />
                     </div>
 
@@ -170,24 +174,31 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
                                     {...params}
                                     variant="outlined"
                                     label="Assign Teams"
-                                    placeholder="Search and select teams..."
                                 />
                             )}
-                            renderTags={(tagValue, getTagProps) =>
-                                tagValue.map((option, index) => (
-                                    <Chip
-                                        key={option.id}
-                                        label={option.name}
-                                        {...getTagProps({ index })}
-                                        className="bg-blue-600 text-white"
-                                    />
-                                ))
-                            }
                         />
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Subtasks</label>
+                        <Autocomplete
+                            multiple
+                            options={allReviewers}
+                            getOptionLabel={(option) => option.username}
+                            value={reviewers}
+                            onChange={(event, newValue) => setReviewers(newValue)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="outlined"
+                                    label="Assign Reviewers"
+                                />
+                            )}
+                        />
+                    </div>
+
+                    {/* Subtasks Section */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-1">Subtasks</label>
                         {subtasks.map((subtask, index) => (
                             <div key={index} className="flex items-center mb-2 space-x-4">
                                 <TextField
@@ -221,7 +232,6 @@ export default function CreateAssignmentModal({ open, onClose, onSubmit }) {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Attachments</label>
                         <input
                             type="file"
                             multiple

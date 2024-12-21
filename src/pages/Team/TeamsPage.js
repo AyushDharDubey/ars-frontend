@@ -89,12 +89,20 @@ export default function TeamsPage() {
                             {teams.length > 0 ? (
                                 <div className="grid grid-cols-2 gap-4">
                                     {teams.map((team) => (
-                                        <Link to={`/team/${team.id}`} key={team.id}>
+                                        team.id === user.id ? (
+                                            <Link to={`/team/${team.id}`} key={team.id}>
+                                                <CardComponent
+                                                    name={team.name}
+                                                    members={team.members}
+                                                />
+                                            </Link>
+                                        ) : (
                                             <CardComponent
+                                                key={team.id}
                                                 name={team.name}
                                                 members={team.members}
                                             />
-                                        </Link>
+                                        )
                                     ))}
                                 </div>
                             ) : (
@@ -112,7 +120,7 @@ export default function TeamsPage() {
                     open={modalOpen}
                     onClose={() => setModalOpen(false)}
                     setTeams={setTeams}
-                    />
+                />
 
             )}
         </div>

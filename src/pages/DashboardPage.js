@@ -7,6 +7,12 @@ import { LeftSidebar, RightSidebar } from './Sidebar';
 import { useSelector } from 'react-redux';
 import CreateAssignmentModal from './Reviewer/CreateAssignment';
 
+const statusClass = {
+    'Pending': 'text-gray-500',
+    'Approved': 'text-green-500',
+    'Changes Suggested': 'text-yellow-500',
+    'Rejected': 'text-red-500'
+};
 
 export default function DashboardPage() {
     const [assignments, setAssignments] = useState([]);
@@ -106,7 +112,7 @@ export default function DashboardPage() {
                                             <CardComponent
                                                 title={assignment.title}
                                                 description={assignment.description}
-                                                status="To be implemented"
+                                                status={assignment.status}
                                             />
                                         </Link>
                                     ))}
@@ -123,6 +129,7 @@ export default function DashboardPage() {
 
             {user?.roles?.includes('Reviewer') && (
                 <CreateAssignmentModal
+                    currentUser={user}
                     open={modalOpen}
                     onClose={closeModal}
                     onSubmit={handleSubmitAssignment}
@@ -138,7 +145,7 @@ function CardComponent({ title, description, status, progress }) {
             <CardContent className="h-full bg-gray-800 p-6 shadow-md hover:bg-gray-700">
                 <h3 className="text-lg font-semibold">{title}</h3>
                 <p className="text-gray-400">{description}</p>
-                <div className="mt-2 text-sm text-gray-500">{status}</div>
+                <p className={`${statusClass[status]}`}><strong>Status:</strong> {status}</p>
 
                 {progress && (
                     <div className="relative w-full h-2 bg-gray-700 rounded-lg mt-2">

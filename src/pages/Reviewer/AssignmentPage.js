@@ -6,10 +6,16 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CreateUpdateReviewModal from "./ReviewAssignment";
 import EditAssignmentModal from "./EditAssignment";
 
+const statusClass = {
+    'Pending': 'text-white',
+    'Approved': 'text-green-500',
+    'Changes Suggested': 'text-yellow-500',
+    'Rejected': 'text-red-500'
+};
 
 export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
     const { assignmentId } = useParams();
-    const [assignment, setAssignment] = useState({subtasks: []});
+    const [assignment, setAssignment] = useState({ subtasks: [] });
     const [submissions, setSubmissions] = useState([]);
     const [isOpenReviewModal, setIsOpenReviewModal] = useState(false);
     const [isOpenEditAssignmentModal, setIsOpenEditAssignmentModal] = useState(false);
@@ -54,6 +60,27 @@ export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
         }
     };
 
+    const notifyAssignees = async () => {
+        await axios.post(`${baseBackend}/reviewer/assignment/${assignmentId}/notify_assignees/`)
+            .then((response) => {
+                if (response.status === 200) {
+                    alert('mail sent');
+                } else if (response.status === 403) {
+                    alert(response?.response?.data?.message);
+                }
+            }).catch((error) => {
+                console.log(error)
+            }).finally();
+    };
+
+    const handleEditAssignment = async (formData) => {
+        await axios.put(`${baseBackend}/reviewer/assignment/${assignment.id}/`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        }).then((response) => {
+            setAssignment(response.data);
+        });
+    };
+
     useEffect(() => {
         if (!hasFetchedData.current) {
             hasFetchedData.current = true;
@@ -70,11 +97,6 @@ export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
         subtask.title.toLowerCase().includes(filter.toLowerCase()) || subtask.description.toLowerCase().includes(filter.toLowerCase())
     );
 
-    const statusClass = {
-        'Approved': 'text-green-500',
-        'Changes Suggested': 'text-yellow-500',
-        'Rejected': 'text-red-500'
-    };
 
     return (
         <div className="flex-1 overflow-auto">
@@ -106,7 +128,7 @@ export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
                         <CircularProgress />
                     </div>
                 ) : (
-                    <AssignmentDetails assignment={assignment} openAssignmentModal={openAssignmentModal} />
+                    <AssignmentDetails assignment={assignment} openAssignmentModal={openAssignmentModal} notifyAssignees={notifyAssignees} />
                 )}
 
                 <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
@@ -134,7 +156,6 @@ export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
                                     submission={submission}
                                     openReviewModal={() => openReviewModal(submission)}
                                     pending={submission.status !== 'Approved'}
-                                    statusClass={statusClass}
                                 />
                                 <CreateUpdateReviewModal
                                     open={isOpenReviewModal}
@@ -148,11 +169,11 @@ export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
                 </Box>
             </main>
 
-            {assignment && (
+            {assignment.title && (
                 <EditAssignmentModal
                     open={isOpenEditAssignmentModal}
                     onClose={closeAssignmentModal}
-                    fetchData={fetchData}
+                    onSubmit={handleEditAssignment}
                     assignment={assignment}
                 />
             )}
@@ -160,7 +181,7 @@ export default function ReviewerAssignmentPage({ isDesktop, toggleMenu }) {
     );
 }
 
-function AssignmentDetails({ assignment, openAssignmentModal }) {
+function AssignmentDetails({ assignment, openAssignmentModal, notifyAssignees }) {
     return (
         <Box className="bg-gray-800 shadow-md rounded-lg p-6 mb-6">
             <Box className="flex justify-between mb-4">
@@ -171,6 +192,7 @@ function AssignmentDetails({ assignment, openAssignmentModal }) {
             </Box>
             <p><strong>Description:</strong> {assignment.description}</p>
             <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
+            <p className={`${statusClass[assignment.status]}`}><strong>Status:</strong> {assignment.status}</p>
             <p><strong>Created At:</strong> {new Date(assignment.created_at).toLocaleString()}</p>
             <p><strong>Assigned to:</strong> {assignment.assigned_to.join(", ")}</p>
 
@@ -193,7 +215,7 @@ function AssignmentDetails({ assignment, openAssignmentModal }) {
             )}
 
             <Box className="flex mt-4 space-x-4">
-                <Button variant="contained" color="warning">
+                <Button variant="contained" color="warning" onClick={notifyAssignees}>
                     Notify Assignees
                 </Button>
             </Box>
@@ -201,10 +223,10 @@ function AssignmentDetails({ assignment, openAssignmentModal }) {
     );
 }
 
-function SubmissionReviewCard({ submission, openReviewModal, pending, statusClass }) {
+function SubmissionReviewCard({ submission, openReviewModal, pending }) {
     return (
         <Box className="p-4 bg-gray-800 shadow-md rounded-lg transition-transform duration-200 hover:shadow-lg hover:-translate-y-1">
-            <h3 className="font-semibold text-lg">Submitted by: {submission.submitted_by}</h3>
+            <h3 className="font-semibold text-lg">Submitted by: {submission.submitted_by.username}</h3>
             <p>Description: {submission.description}</p>
             <p>Submitted on: {new Date(submission.created_at).toLocaleString()}</p>
             <p>Last Updated: {new Date(submission.updated_at).toLocaleString()}</p>
@@ -215,7 +237,7 @@ function SubmissionReviewCard({ submission, openReviewModal, pending, statusClas
                     <h4 className="text-sm text-gray-400">Review:</h4>
                     {submission.reviews.map((review) => (
                         <div key={review.id} className="bg-gray-700 p-3 mt-2 rounded-lg">
-                            <p className={`font-medium ${statusClass[submission.status]}`}>Status: {submission.status}</p>
+                            <p className={`font-medium ${statusClass[review.status]}`}>Status: {review.status}</p>
                             <p>Comments: {review.comments}</p>
                             <p>Reviewed on: {new Date(review.created_at).toLocaleString()}</p>
                         </div>

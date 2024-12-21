@@ -1,4 +1,13 @@
-import { CircularProgress, Modal, Box, TextField, Select, MenuItem, Chip, OutlinedInput } from '@mui/material';
+import {
+    CircularProgress,
+    Modal,
+    Box,
+    TextField,
+    Button,
+    IconButton,
+    Autocomplete,
+} from "@mui/material";
+import { Add, Remove } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -11,21 +20,32 @@ export default function EditAssignmentModal({ open, onClose, onSubmit, assignmen
     const [subtaskDescription, setSubtaskDescription] = useState("");
     const [files, setFiles] = useState(assignment.files);
     const [allReviewees, setAllReviewees] = useState([]);
-    const [reviewees, setReviewees] = useState([]);
+    const [allTeams, setAllTeams] = useState([]);
+    const [allReviewers, setAllReviewers] = useState([]);
+    const [reviewees, setReviewees] = useState(assignment.reviewees);
+    const [teams, setTeams] = useState(assignment.teams);
+    const [reviewers, setReviewers] = useState(assignment.reviewers);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const baseBackend = process.env.REACT_APP_BASE_BACKEND;
 
-    const handleAddSubtask = () => {
-        if (subtaskTitle && subtaskDescription) {
-            setSubtasks([...subtasks, { title: subtaskTitle, description: subtaskDescription }]);
-            setSubtaskTitle("");
-            setSubtaskDescription("");
-        }
-    };
-
     const handleFileChange = (event) => {
         setFiles(event.target.files);
+    };
+
+    const handleSubtaskChange = (index, field, value) => {
+        const updatedSubtasks = [...subtasks];
+        updatedSubtasks[index][field] = value;
+        setSubtasks(updatedSubtasks);
+    };
+
+    const addSubtask = () => {
+        setSubtasks([...subtasks, { title: "", description: "" }]);
+    };
+
+    const removeSubtask = (index) => {
+        const updatedSubtasks = subtasks.filter((_, i) => i !== index);
+        setSubtasks(updatedSubtasks);
     };
 
     const handleSubmit = async (event) => {
@@ -38,15 +58,21 @@ export default function EditAssignmentModal({ open, onClose, onSubmit, assignmen
             formData.append("title", title);
             formData.append("description", description);
             formData.append("due_date", dueDate);
-            subtasks.forEach((subtask, index) => {
-                formData.append(`subtasks[${index}][title]`, subtask.title);
-                formData.append(`subtasks[${index}][description]`, subtask.description);
-            });
             Array.from(files).forEach((file) => {
                 formData.append("files", file);
             });
-            formData.append("assigned_to", reviewees.map(_ => _.id));
-            formData.append("assigned_to_team", []);
+            reviewees.forEach((reviewee) => {
+                formData.append("assigned_to", reviewee.id);
+            });
+            teams.forEach((team) => {
+                formData.append("assigned_to_teams", team.id);
+            });
+            reviewers.forEach((reviewer) => {
+                formData.append("reviewers", reviewer.id);
+            });
+            subtasks.forEach((subtask) => {
+                formData.append("subtasks", JSON.stringify(subtask));
+            });
 
             await onSubmit(formData);
             onClose();
@@ -59,26 +85,47 @@ export default function EditAssignmentModal({ open, onClose, onSubmit, assignmen
     };
 
     useEffect(() => {
+        const date = new Date(assignment.due_date);
+        setDueDate(
+            date?.toISOString().slice(0, 16)
+            || ""
+        );
         (async () => {
             await axios.get(`${baseBackend}/api/list_reviewees/`)
                 .then((response) => {
                     const fetchedReviewees = response.data;
                     setAllReviewees(fetchedReviewees);
-                    
                     const previouslyAssignedReviewees = fetchedReviewees.filter((reviewee) =>
                         assignment?.assigned_to?.includes(reviewee?.id)
                     );
-                    setReviewees((prevReviewees) => [...prevReviewees, ...previouslyAssignedReviewees]);
+                    setReviewees(previouslyAssignedReviewees);
+                });
+            await axios.get(`${baseBackend}/api/list_reviewers/`)
+                .then((response) => {
+                    const fetchedReviewers = response.data;
+                    setAllReviewers(fetchedReviewers);
+                    const previousReviewers = fetchedReviewers.filter((reviewer) =>
+                        assignment?.reviewers?.includes(reviewer?.id)
+                    );
+                    setReviewers(previousReviewers);
+                });
+            await axios.get(`${baseBackend}/api/list_teams/`)
+                .then((response) => {
+                    const fetchedTeams = response.data;
+                    setAllTeams(fetchedTeams);
+                    const previouslyAssignedTeams = fetchedTeams.filter((team) =>
+                        assignment?.assigned_to_teams?.includes(team?.id)
+                    );
+                    setTeams(previouslyAssignedTeams);
                 });
         })();
     }, []);
 
     return (
         <Modal open={open} onClose={onClose} className="flex items-center justify-center">
-            <Box className="bg-gray-800 text-white p-8 rounded-lg shadow-md max-w-2xl overflow-auto mx-auto relative">
+            <Box className="bg-gray-800 text-white p-8 rounded-lg shadow-md max-w-2xl overflow-auto mx-auto min-w-[70vh] max-h-[90vh] relative">
                 <h1 className="text-2xl font-bold mb-6">Edit Assignment</h1>
-                <form onSubmit={handleSubmit} className='max-h-[70vh]'>
-
+                <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <TextField
                             fullWidth
@@ -102,7 +149,7 @@ export default function EditAssignmentModal({ open, onClose, onSubmit, assignmen
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Due Date</label>
+                        <label className="block text-sm font-medium mb-1">Due Date</label>
                         <TextField
                             type="datetime-local"
                             fullWidth
@@ -113,64 +160,92 @@ export default function EditAssignmentModal({ open, onClose, onSubmit, assignmen
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Assign Reviewees</label>
-                        <Select
+                        <Autocomplete
                             multiple
-                            fullWidth
+                            options={allReviewees}
+                            getOptionLabel={(option) => option.username}
                             value={reviewees}
-                            onChange={(e) => setReviewees(e.target.value)}
-                            renderValue={(selected) => (
-                                <div className="flex flex-wrap">
-                                    {selected.map((reviewee) => (
-                                        <Chip key={reviewee.id} label={reviewee.username} className="m-1 bg-blue-600 text-white" />
-                                    ))}
-                                </div>
+                            onChange={(event, newValue) => setReviewees(newValue)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="outlined"
+                                    label="Assign Reviewees"
+                                />
                             )}
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <Autocomplete
+                            multiple
+                            options={allTeams}
+                            getOptionLabel={(option) => option.name}
+                            value={teams}
+                            onChange={(event, newValue) => setTeams(newValue)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="outlined"
+                                    label="Assign Teams"
+                                />
+                            )}
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <Autocomplete
+                            multiple
+                            options={allReviewers}
+                            getOptionLabel={(option) => option.username}
+                            value={reviewers}
+                            onChange={(event, newValue) => setReviewers(newValue)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    variant="outlined"
+                                    label="Assign Reviewers"
+                                />
+                            )}
+                        />
+                    </div>
+
+                    {/* Subtasks Section */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-1">Subtasks</label>
+                        {subtasks.map((subtask, index) => (
+                            <div key={index} className="flex items-center mb-2 space-x-4">
+                                <TextField
+                                    label="Title"
+                                    variant="outlined"
+                                    value={subtask.title}
+                                    onChange={(e) => handleSubtaskChange(index, "title", e.target.value)}
+                                    fullWidth
+                                />
+                                <TextField
+                                    label="Description"
+                                    variant="outlined"
+                                    value={subtask.description}
+                                    onChange={(e) => handleSubtaskChange(index, "description", e.target.value)}
+                                    fullWidth
+                                />
+                                <IconButton onClick={() => removeSubtask(index)} color="error">
+                                    <Remove />
+                                </IconButton>
+                            </div>
+                        ))}
+                        <Button
+                            onClick={addSubtask}
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Add />}
+                            className="mt-2"
                         >
-                            {allReviewees?.map((reviewee) => (
-                                <MenuItem key={reviewee.id} value={reviewee}>
-                                    {reviewee.username}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            Add Subtask
+                        </Button>
                     </div>
 
                     <div className="mb-4">
-                        <h2 className="text-lg font-bold mb-2">Subtasks</h2>
-                        <div className="flex space-x-4">
-                            <input
-                                type="text"
-                                placeholder="Subtask Title"
-                                value={subtaskTitle}
-                                onChange={(e) => setSubtaskTitle(e.target.value)}
-                                className="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-lg"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Subtask Description"
-                                value={subtaskDescription}
-                                onChange={(e) => setSubtaskDescription(e.target.value)}
-                                className="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-lg"
-                            />
-                            <button
-                                type="button"
-                                onClick={handleAddSubtask}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
-                            >
-                                Add
-                            </button>
-                        </div>
-                        <ul className="list-disc list-inside mt-4 space-y-2">
-                            {subtasks.map((subtask, index) => (
-                                <li key={index} className="p-2 bg-gray-700 rounded-lg">
-                                    <strong>{subtask.title}</strong>: {subtask.description}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Attachments</label>
                         <input
                             type="file"
                             multiple
@@ -187,7 +262,7 @@ export default function EditAssignmentModal({ open, onClose, onSubmit, assignmen
                             disabled={loading}
                             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg"
                         >
-                            {loading ? <CircularProgress size={24} /> : "Create Assignment"}
+                            {loading ? <CircularProgress size={24} /> : "Edit Assignment"}
                         </button>
                     </div>
                 </form>

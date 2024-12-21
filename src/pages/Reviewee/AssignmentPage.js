@@ -5,6 +5,13 @@ import axios from "axios";
 import MenuIcon from '@mui/icons-material/Menu';
 import { CircularProgress, IconButton, Box } from "@mui/material";
 
+const statusClass = {
+    'Pending': 'text-white',
+    'Approved': 'text-green-500',
+    'Changes Suggested': 'text-yellow-500',
+    'Rejected': 'text-red-500'
+};
+
 export default function RevieweeAssignmentPage({ isDesktop, toggleMenu }) {
     const { assignmentId } = useParams();
     const [submissions, setSubmissions] = useState([]);
@@ -81,6 +88,8 @@ function AssignmentDetails({ assignment }) {
             <p className="mb-2"><strong>Title:</strong> {assignment.title}</p>
             <p><strong>Description:</strong> {assignment.description}</p>
             <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
+            <p><strong>Due Date:</strong> {new Date(assignment.due_date).toLocaleString()}</p>
+            <p className={`${statusClass[assignment.status]}`}><strong>Status:</strong> {assignment.status}</p>
             <p><strong>Created At:</strong> {new Date(assignment.created_at).toLocaleString()}</p>
             {assignment.assigned_to && assignment.assigned_to.length > 0 ? (
                 <p>
