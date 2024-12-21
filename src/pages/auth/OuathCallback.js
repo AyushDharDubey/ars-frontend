@@ -8,6 +8,7 @@ import { CircularProgress } from '@mui/material';
 export default function OAuthCallback() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const baseBackend = process.env.REACT_APP_BASE_BACKEND;
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -15,7 +16,7 @@ export default function OAuthCallback() {
     const state = urlParams.get("state");
 
     const callback = async () => {
-      await axios.get(`http://localhost:8000/auth/oauth/channeli/callback/?code=${code}&state=${state}`, {
+      await axios.get(`${baseBackend}/auth/oauth/channeli/callback/?code=${code}&state=${state}`, {
         headers: {
           "Content-Type": "application/json",
         },
