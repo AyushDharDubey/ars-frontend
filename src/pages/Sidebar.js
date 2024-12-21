@@ -13,8 +13,8 @@ export function LeftSidebar({ toggleMenu }) {
         <aside className="w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0">
             <div className="mb-8 p-6 flex flex-row justify-around">
                 <div>
-                    <h2 className="text-lg font-semibold">Username</h2>
-                    <p className="text-sm text-gray-400">Full name</p>
+                    <h2 className="text-lg font-semibold">{user.username}</h2>
+                    <p className="text-gray-400">{user.firstName}</p>
                 </div>
             </div>
 
@@ -25,8 +25,8 @@ export function LeftSidebar({ toggleMenu }) {
                 <Link to="/teams" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Teams
                 </Link>
-                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
-                    Reviews
+                <Link to="/profile" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                    Profile
                 </Link>
                 <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Submissions
@@ -34,8 +34,8 @@ export function LeftSidebar({ toggleMenu }) {
             </nav>
 
             <div className="mt-auto">
-                <Link to="#" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
-                    Settings
+                <Link to="/profile" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
+                    {user.username}
                 </Link>
                 <Link to="/logout" onClick={handleClick} className="block py-2 px-4 text-sm hover:bg-gray-700 rounded-lg">
                     Log Out {user.username}
@@ -57,14 +57,6 @@ export function RightSidebar() {
                 <h3 className="text-lg font-semibold">Recent Submissions</h3>
                 <Assignment title="Title" due_date="due date" status="pending" />
             </div>
-
-            {/* <div>
-                <h3 className="text-lg font-semibold">Inbox</h3>
-                <div className="bg-gray-800 p-4 rounded-lg shadow-md mt-4">
-                    <p className="font-semibold">New review assignment has been created.</p>
-                    <p className="text-gray-400 text-sm">Something....</p>
-                </div>
-            </div> */}
         </aside>
     );
 }

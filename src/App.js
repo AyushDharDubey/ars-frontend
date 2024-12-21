@@ -1,6 +1,6 @@
 // App.js
 import React, { useEffect, useState } from 'react';
-import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { Route, Routes, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import HomePage from './pages/HomePage';
@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import AssignmentPage from './pages/AssignmentPage';
 import TeamsPage from './pages/Team/TeamsPage';
 import TeamChatPage from './pages/Team/TeamChatPage';
+import ProfilePage from './pages/Profile/ProfilePage';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from './store/userSlice';
@@ -30,6 +31,7 @@ function App() {
   const baseBackend = process.env.REACT_APP_BASE_BACKEND;
   const location = useLocation();
   const excludedPaths = ['/login', '/signup', '/logout'];
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
 
@@ -40,17 +42,19 @@ function App() {
         .then(response => {
           dispatch(
             setUser({
+              id: response.data.id,
               username: response.data.username,
+              firstName: response.data.first_name,
+              lastName: response.data.last_name,
               email: response.data.email,
               roles: response.data.roles,
             })
           );
-          setLoading(false);
         })
         .catch(err => {
           console.log("Error fetching user profile:", err);
-          setLoading(false);
-        });
+          navigate('/login');
+        }).finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -93,6 +97,10 @@ function App() {
         <Route
           path="/team/:teamId"
           element={user ? <TeamChatPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/profile"
+          element={user ? <ProfilePage /> : <Navigate to="/login" />}
         />
       </Routes>
     </ThemeProvider>
