@@ -30,13 +30,14 @@ function App() {
   const user = useSelector((state) => state.user);
   const baseBackend = process.env.REACT_APP_BASE_BACKEND;
   const location = useLocation();
-  const excludedPaths = ['/login', '/signup', '/logout'];
+  const excludedPaths = ['/login', '/signup', '/logout', '/auth/oauth/channeli/callback'];
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!excludedPaths.includes(location.pathname)) {
+    const shouldExclude = excludedPaths.some(path => location.pathname.startsWith(path));
+
+    if (!shouldExclude) {
       axios
         .get(baseBackend + `/auth/profile/`)
         .then(response => {
@@ -54,11 +55,13 @@ function App() {
         .catch(err => {
           console.log("Error fetching user profile:", err);
           navigate('/login');
-        }).finally(() => setLoading(false));
+        })
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, [location.pathname, dispatch, baseBackend]);
+
 
   if (loading) {
     return (

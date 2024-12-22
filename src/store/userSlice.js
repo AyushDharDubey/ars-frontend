@@ -16,7 +16,7 @@ const userSlice = createSlice({
         setUser: (state, action) => {
             const { id, roles, username, firstName, lastName, email } = action.payload;
 
-            if (!id || !username || !firstName || !lastName || !email || !Array.isArray(roles) || roles.length === 0) {
+            if (!id || !username || !firstName  || !email || !Array.isArray(roles) || roles.length === 0) {
                 console.log(action.payload);
                 throw new Error("All user fields must be populated and roles should be a non-empty array.");
             }
